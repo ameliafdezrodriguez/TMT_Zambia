@@ -1,0 +1,77 @@
+
+// Center the map on point of interest  
+Map.centerObject(poi, 8);  
+
+// ----------------------------------------------------------------
+// OBTAIN A CLOUD-FREE IMAGE WITHIN A SPECIFIED DATE AND FOOTPRINT
+// ----------------------------------------------------------------
+
+// Filter collection using filterBounds() and filterDate() method. 
+var ls8filtered = landsat8
+  .filterBounds(poi)
+  .filterDate('2020-01-01', '2020-12-31');
+  
+// Print the filtered collection to the Console
+print('filtered collection',ls8filtered);
+
+// Sort the filtered collection by cloud cover metadata
+var ls8Image = ls8filtered
+  .sort('CLOUD_COVER') 
+  .first();
+
+// Print the selected image to the Console
+print('filtered and sorted image',ls8Image);
+
+//------------------------------------------------------------------
+// RETRIEVE IMAGE METADATA
+//-------------------------------------------------------------------
+// Get information about the bands as a list.
+var bandNames = ls8Image.bandNames();
+print('Band names: ', bandNames); // ee.List 
+
+// Get the timestamp and convert it to a date.
+var ls8Date = ee.Date(ls8Image.get('system:time_start'));
+print('Timestamp: ', ls8Date); // ee.Date
+
+// Get the percentage cloud cover
+var cloudiness = ls8Image.get('CLOUD_COVER');
+print('Cloud cover: ', cloudiness); // ee.Number
+
+//------------------------------------------------------------------
+// DISPLAY THE IMAGE 
+//-------------------------------------------------------------------
+
+// Define visualaztion parameters 
+var trueColor_ls8 = {
+  bands: ['B4', 'B3', 'B2'], 
+  min: 0, 
+  max: 0.5,
+};
+
+var falseColor_ls8 = {
+  bands: ['B5', 'B4', 'B3'], 
+  min: 0, 
+  max: 0.5
+};
+
+// Display the image via Map.addLayer(eeObject, visParams, name)
+Map.addLayer(ls8Image, trueColor_ls8, 'Ls8 true color');+
+Map.addLayer(ls8Image, falseColor_ls8, 'Ls8 false color');
+Map.addLayer(ls8Image, imageVisParam, 'Ls8 false color - imageVisParam');
+
+//------------------------------------------------------------------
+// MAKE A NDVI IMAGE 
+//-------------------------------------------------------------------
+
+// Compute NDVI from Ls8 image and rename the band 'NDVI'
+var ndviImage = ls8Image.normalizedDifference(['B5', 'B4']);
+
+// Define visualization parameters
+var ndviVis = {
+  palette : ['darkblue', 'blue', 'red', 'orange', 'yellow', 'green', 'darkgreen'],
+  min : -0.1,
+  max : 0.4
+};
+
+// Add NDVI image to the Map
+Map.addLayer(ndviImage, ndviVis, 'NDVI image');
